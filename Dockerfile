@@ -1,16 +1,19 @@
-FROM debian:jessie
+FROM openjdk:8-jre
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		bzip2 \
+		unzip \
+		xz-utils \
+&& rm -rf /var/lib/apt/lists/*
 
-MAINTAINER Henrik Sachse <t3x7m3@posteo.de>
+# Inspired by h3nrik/apacheds
 
-#############################################
 # ApacheDS installation
-#############################################
 
 ENV APACHEDS_VERSION 2.0.0-M20
 ENV APACHEDS_ARCH amd64
 
 ENV APACHEDS_ARCHIVE apacheds-${APACHEDS_VERSION}-${APACHEDS_ARCH}.deb
-ENV APACHEDS_DATA /var/lib/apacheds-${APACHEDS_VERSION}
+ENV APACHEDS_DATA /var/lib/apacheds
 ENV APACHEDS_USER apacheds
 ENV APACHEDS_GROUP apacheds
 
@@ -18,31 +21,29 @@ VOLUME ${APACHEDS_DATA}
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
     && apt-get update \
-    && apt-get install -y ldap-utils procps openjdk-7-jre-headless curl \
+    && apt-get install -y ldap-utils procps curl \
     && curl http://www.eu.apache.org/dist//directory/apacheds/dist/${APACHEDS_VERSION}/${APACHEDS_ARCHIVE} > ${APACHEDS_ARCHIVE} \
     && dpkg -i ${APACHEDS_ARCHIVE} \
 	&& rm ${APACHEDS_ARCHIVE}
 
-#############################################
 # ApacheDS bootstrap configuration
-#############################################
 
 ENV APACHEDS_INSTANCE default
 ENV APACHEDS_BOOTSTRAP /bootstrap
+ENV APACHEDS_SCRIPT run.sh
+ENV APACHEDS_CMD /${APACHEDS_SCRIPT}
+ADD scripts/${APACHEDS_SCRIPT} ${APACHEDS_CMD}
+RUN chown ${APACHEDS_USER}:${APACHEDS_GROUP} ${APACHEDS_CMD} \
+    && chmod u+rx ${APACHEDS_CMD}
 
-ADD instance/* ${APACHEDS_BOOTSTRAP}/conf/
+ADD config/* ${APACHEDS_BOOTSTRAP}/conf/
 RUN mkdir ${APACHEDS_BOOTSTRAP}/cache \
     && mkdir ${APACHEDS_BOOTSTRAP}/run \
     && mkdir ${APACHEDS_BOOTSTRAP}/log \
     && mkdir ${APACHEDS_BOOTSTRAP}/partitions \
     && chown -R ${APACHEDS_USER}:${APACHEDS_GROUP} ${APACHEDS_BOOTSTRAP}
 
-ADD scripts/run.sh /run.sh
-RUN chown ${APACHEDS_USER}:${APACHEDS_GROUP} /run.sh \
-    && chmod u+rx /run.sh
-
-#############################################
 # ApacheDS wrapper command
-#############################################
-CMD ["/run.sh"]
 
+EXPOSE 10389 10636 60088 60464 8080 8443
+CMD ["/run.sh"]
