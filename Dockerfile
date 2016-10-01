@@ -30,13 +30,13 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 
 ENV APACHEDS_INSTANCE default
 ENV APACHEDS_BOOTSTRAP /bootstrap
-ENV APACHEDS_SCRIPT run.sh
-ENV APACHEDS_CMD /${APACHEDS_SCRIPT}
-ADD scripts/${APACHEDS_SCRIPT} ${APACHEDS_CMD}
-RUN chown ${APACHEDS_USER}:${APACHEDS_GROUP} ${APACHEDS_CMD} \
-    && chmod u+rx ${APACHEDS_CMD}
+ENV APACHEDS_SCRIPT docker-entrypoint.sh
 
-ADD config/* ${APACHEDS_BOOTSTRAP}/conf/
+COPY ${APACHEDS_SCRIPT} /${APACHEDS_SCRIPT}
+RUN chown ${APACHEDS_USER}:${APACHEDS_GROUP} /${APACHEDS_SCRIPT} \
+    && chmod u+rx /${APACHEDS_SCRIPT}
+
+COPY config/* ${APACHEDS_BOOTSTRAP}/conf/
 RUN mkdir ${APACHEDS_BOOTSTRAP}/cache \
     && mkdir ${APACHEDS_BOOTSTRAP}/run \
     && mkdir ${APACHEDS_BOOTSTRAP}/log \
@@ -46,4 +46,4 @@ RUN mkdir ${APACHEDS_BOOTSTRAP}/cache \
 # ApacheDS wrapper command
 
 EXPOSE 10389 10636 60088 60464 8080 8443
-CMD ["/run.sh"]
+CMD ["/docker-entrypoint.sh"]
