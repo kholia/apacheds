@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ApacheDS installation
 
-ENV APACHEDS_VERSION 2.0.0-M20
+ENV APACHEDS_VERSION 2.0.0-M24
 ENV APACHEDS_ARCH amd64
 
 ENV APACHEDS_ARCHIVE apacheds-${APACHEDS_VERSION}-${APACHEDS_ARCH}.deb
